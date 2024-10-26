@@ -2,9 +2,12 @@ import BookItem from "@/components/book-item";
 import style from "./page.module.css";
 import books from "@/mock/books.json";
 import { BookData } from "@/types";
-import { cache } from "react";
+import { Suspense, cache } from "react";
+import { delay } from "@/util/delay";
+import BookItemSkeleton from "@/components/skeleton/book-item-skeleton";
+import BookListSkeleton from "@/components/skeleton/book-list-skeleton";
 
-export const dynamic = "error"; // 정말 특별한 경우 아니면 권장되지 않음. 자동으로 잘 해주기 때문에.
+// export const dynamic = "error"; // 정말 특별한 경우 아니면 권장되지 않음. 자동으로 잘 해주기 때문에.
 // 특정 페이지의 유형을 강제로 Static, Dynamic 페이지로 설정
 // 1. auto: 기본값, 아무것도 강제하지 않음.
 // 2. force-dynamic : 페이지를 강제로 dynamic 페이지로 설정
@@ -14,6 +17,7 @@ export const dynamic = "error"; // 정말 특별한 경우 아니면 권장되�
 // Cache 없는 경우, 이 페이지를 포함하는 모든 페이지는 Dynamic 으로 설정됨.
 
 async function AllBooks() {
+	await delay(1500);
 	const response = await fetch(
 		`${process.env.NEXT_PUBLIC_API_SERVER_URL}/book`,
 		// { cache: "no-store" }
@@ -36,6 +40,9 @@ async function AllBooks() {
 async function RecoBooks() {
 	// NEXT15: 아무것도 안넣으면 캐시되지 않는 것
 	// NEXT14: 캐시 자동으로 됨.
+
+	await delay(3000);
+
 	const response = await fetch(
 		`${process.env.NEXT_PUBLIC_API_SERVER_URL}/book/random`,
 		{ next: { revalidate: 3 } } // 포함하는 페이지까지 함께 revalidate
@@ -54,20 +61,27 @@ async function RecoBooks() {
 	);
 }
 
+export const dynamic = "force-dynamic";
+
 // serverComponent 라서 browser 에서는 console 안보임.
 export default async function Home() {
 	return (
 		<div className={style.container}>
 			<section>
 				<h3>지금 추천하는 도서</h3>
-				{/* {books.map((book) => (
-					<BookItem key={book.id} {...book} />
-				))} */}
-				<RecoBooks />
+				{/* <BookItemSkeleton /> */}
+				<Suspense
+					// fallback={<div>추천 도서를 불러오는 중입니다...</div>}
+					fallback={<BookListSkeleton count={3} />}
+				>
+					<RecoBooks />
+				</Suspense>
 			</section>
 			<section>
 				<h3>등록된 모든 도서</h3>
-				<AllBooks />
+				<Suspense fallback={<BookListSkeleton count={3} />}>
+					<AllBooks />
+				</Suspense>
 			</section>
 		</div>
 	);
