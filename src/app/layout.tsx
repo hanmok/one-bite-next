@@ -38,6 +38,7 @@ export default function RootLayout({
 					{/* <footer>제작 @winterlood</footer> */}
 					<Footer />
 				</div>
+				<div id="modal-root"></div>
 			</body>
 		</html>
 	);
